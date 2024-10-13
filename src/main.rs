@@ -5,7 +5,6 @@ use std::{
 
 use anyhow::Context;
 use clap::Parser;
-use sha2::Digest;
 
 /// RaptorQ over UDP transmitter
 #[derive(Parser, Debug)]
@@ -48,12 +47,8 @@ fn main() -> anyhow::Result<()> {
     }
 
     let file = std::fs::read(&args.path).with_context(|| "failed to read file")?;
-    let hash = sha2::Sha256::digest(&file);
-    println!(
-        "file hash = {}, size = {}",
-        faster_hex::hex_string(&hash),
-        file.len()
-    );
+    let hash = blake3::hash(&file);
+    println!("file hash = {}, size = {}", hash.to_hex(), file.len());
 
     let body_size = args.mtu.checked_sub(36).unwrap_or(0);
     if body_size == 0 {
@@ -98,8 +93,8 @@ fn main() -> anyhow::Result<()> {
             for pkt in &packets {
                 let pkt = pkt.serialize();
                 let mut header = [0u8; 32];
-                header[0..16].copy_from_slice(&hash[0..16]);
-                header[16..32].copy_from_slice(&sha2::Sha256::digest(&pkt)[0..16]);
+                header[0..16].copy_from_slice(&hash.as_bytes()[0..16]);
+                header[16..32].copy_from_slice(&blake3::hash(&pkt).as_bytes()[0..16]);
                 let pkt = [&header[..], &pkt[..]].concat();
                 num_bytes += pkt.len();
                 num_packets += 1;
