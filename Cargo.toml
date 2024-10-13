@@ -1,0 +1,12 @@
+[package]
+name = "raptorq-udp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+chrono = "0.4"
+clap = { version = "4", features = ["derive"] }
+faster-hex = "0.10"
+raptorq = "2"
+sha2 = "0.10"
